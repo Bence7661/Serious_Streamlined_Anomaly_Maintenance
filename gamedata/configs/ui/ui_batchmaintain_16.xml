@@ -86,7 +86,8 @@
 		</con_item_1_new>
 
 		<btn_repair x="300" y="580" width="150" height="37">
-			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">ui_mm_repair</text>
+			<!-- <text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">ui_mm_repair</text> -->
+			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">Batch Repair</text>
 			<texture>ui_button_ordinary</texture>
 		</btn_repair>
 		<btn_cook x="113" y="568" width="150" height="37">
