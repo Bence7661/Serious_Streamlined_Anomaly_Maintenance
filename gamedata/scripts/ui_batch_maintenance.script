@@ -299,6 +299,7 @@ function UIRepair:OnItemSelect(n)
 	end
 
 	local sec = obj_n:section()
+	local name = ui_item.get_sec_name(sec)
 	local id = obj_n:id()
 	local con = 0
 	if n == 2 then
@@ -311,6 +312,8 @@ function UIRepair:OnItemSelect(n)
 
 		self:removeSupItem(self.available_sup_items, obj_n)
 		
+		self.text_item[2]:SetText("Added: " .. name)
+
 		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
 		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
 	end
@@ -318,15 +321,13 @@ function UIRepair:OnItemSelect(n)
 		self.available_sup_items[#self.available_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.selected_sup_items, obj_n)}
 		self:removeSupItem(self.selected_sup_items, obj_n)
 		
+		self.text_item[2]:SetText("Removed: " .. name)
+
 		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
 		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
 	end
 
 	if n ~= 3 then
-		-- Text (Name)
-		local name = ui_item.get_sec_name(sec)
-		self.text_item[n]:SetText(name)
-		
 		-- Text (Condition)
 		self.con_val[1] = math.ceil((obj_1:condition())*100)
 		self.con_val[2] = ((n == 2) and con) or 0
@@ -343,11 +344,14 @@ function UIRepair:OnItemSelect(n)
 		
 		-- Icon
 		self.cell_item[n]:Set(obj_n)
-
+		
 		-- Reset supportive item when you choose main item
 		if (n == 1) and self.use_parts then
+			self.text_item[1]:SetText(name)
 			self.cell_item[2]:Reset()
 			self.text_item[2]:SetText("")
+			self.selected_sup_items = {}
+			self.CC[3]:Reinit({},{})
 			--self.con_txt[1]:SetText("")
 			--self.con_txt[2]:SetText("")
 			--self.con_txt_base:SetText("")
