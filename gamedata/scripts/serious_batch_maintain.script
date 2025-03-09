@@ -1,0 +1,43 @@
+function option_appear_cond(obj, bag, mode)
+    local obj_section = obj:section()
+
+    printf("Object %s", obj_section)
+
+    if obj_section == "cleaning_kit_u" then 
+        printf("Found cleaning kit")
+        return true 
+    else
+        return false 
+    end
+end
+
+function define_option(obj, bag, mode)
+    local mode = {
+		["inventory"] = true,
+		["loot"] = true,
+	}
+	local bag = {
+		["actor_equ"] = true,
+		["actor_belt"] = true,
+		["actor_bag"] = true,
+		["npc_bag"] = true,
+	}
+	return "batch maintain"
+end
+
+function batch_maintenance(obj, bag, mode)
+    --// Call UI
+    -- local hud = get_hud()
+    --if ui then
+        --ui:HideDialog()
+    --end
+    local ui = ui_batch_maintenance and ui_batch_maintenance.start(obj)
+    if (ui) then
+        printf("The ui is initialized succesfully")
+        ui:ShowDialog(true)
+    end
+end
+
+function on_game_start()
+	custom_functor_autoinject.add_functor("serious_batchmaint", option_appear_cond, define_option, nil, batch_maintenance, true)
+end
