@@ -37,7 +37,14 @@ class "UIRepair" (CUIScriptWnd)
 function UIRepair:__init(obj,section) super()
 	self.section = section
 	self.obj = obj
-	
+
+	self.available_sup_items = {}
+	self.selected_sup_items = {}
+
+	-- self.selected_suppitems = {}
+	-- self.available_suppitems = {}
+	-- self.info_selected_suppitems = {}
+	-- self.info_available_suppitems = {}
 	-- Reload settings
 	self.clr_b = utils_xml.get_color("pda_blue")
 
@@ -80,6 +87,14 @@ function UIRepair:InitControls()
 		self.CC[i].disable_drag   = true
 		self.CC[i]:SetGridSpecs(35, 2)
 	end
+
+	--Selected supp materials container
+	self.CC[3]                = utils_ui.UICellContainer(3, self, nil, "repair:selected_supp_mats", self.dialog)
+	self.CC[3].can_select	  = true
+	self.CC[3].disable_drag   = true
+	self.CC[3]:SetGridSpecs(35, 2)
+	--Selected supp materials container
+
 	self.CC[2].disable_bar = true
 	self.con_txt_base = xml:InitTextWnd("repair:con_item_base" , self.dialog)
 	self.con_txt_new = xml:InitTextWnd("repair:con_item_1_new" , self.dialog)
@@ -92,6 +107,10 @@ function UIRepair:InitControls()
 	
 	self.btn_cancel = xml:Init3tButton("repair:btn_back", self.dialog)
 	self:Register(self.btn_cancel,"btn_cancel")
+
+	-- DEBUG
+	-- self.debug_element = xml:Init3tButton("repair:debug_element", self.dialog)
+	-- DEBUG
 end
 
 function UIRepair:InitCallBacks()
@@ -120,7 +139,14 @@ function UIRepair:Reset(obj,section)
 	self.con_val           = {}
 	
 	-- Elements
+	self.available_sup_items = {}
+	self.selected_sup_items = {}
 	self.CC[2]:Reset()
+--SELECTED SUPP ITEMS
+	self.available_sup_items = {}
+	self.selected_sup_items = {}
+	self.CC[3]:Reset()
+--SELECTED SUPP ITEMS
 	self.con_txt[1]:SetText("")
 	self.con_txt[2]:SetText("")
 	self.text_item[1]:SetText("")
@@ -137,6 +163,7 @@ function UIRepair:Reset(obj,section)
 	self.text_item[2]:Show(to_show)
 	self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
+	self.CC[3]:Show(to_show)
 	
 	-- Set Repair kit name
 	self.cap_menu:SetText(ui_item.get_sec_name(self.section))
@@ -157,6 +184,12 @@ end
 
 function UIRepair:InitInventory(n)
 	local inv = {}
+	-- self.available_suppitems = {}
+	-- self.info_available_suppitems = {}
+	-- self.selected_suppitems = {}
+	-- self.info_selected_suppitems = {}
+	self.available_sup_items = {}
+	self.selected_sup_items = {}
 	local size_t = 0
 	
 	-- Compatible weapons list to repair
@@ -181,36 +214,27 @@ function UIRepair:InitInventory(n)
 		if (not obj_s) then
 			return
 		end
-		
-		local inf = {}
-		local ItemListSec_2 = {} -- to show only one copy of bonus items
-		db.actor:iterate_inventory( function(owner, obj)
+
+		db.actor:iterate_inventory( function(owner, obj) --initialize inv
 			local sec = obj:section()
-			if (not ItemListSec_2[sec]) and (obj) and (obj:id() ~= obj_s:id()) and (obj:id() ~= self.obj:id()) then
-				ItemListSec_2[sec] = true
-				
+			if (obj) and (obj:id() ~= obj_s:id()) and (obj:id() ~= self.obj:id()) then
 				if (self.parts_match and sec == obj_s:section()) then
 					local part_bonus = obj:condition()
 					part_bonus = (game_achievements.has_achievement("mechanized_warfare")) and (part_bonus + 0.02) or part_bonus
 					part_bonus = clamp(math.floor(part_bonus*100)*self.parts_multi , 0 , 100)
 				
-					size_t = size_t + 1
-					inv[size_t] = obj
-					inf[size_t] = part_bonus
-				
+					self.available_sup_items[#self.available_sup_items + 1] = { item = obj, item_bonus = part_bonus }
 				elseif (self.parts_sections and self.parts_sections[sec]) then
 					local part_bonus = ini_sys:r_float_ex(sec,"repair_part_bonus") or self.part_bonus
 					part_bonus = (game_achievements.has_achievement("mechanized_warfare")) and (part_bonus + 0.02) or part_bonus
 					part_bonus = clamp(math.floor(part_bonus*100)*self.parts_multi , 0 , 100)
 				
-					size_t = size_t + 1
-					inv[size_t] = obj
-					inf[size_t] = part_bonus
+					self.available_sup_items[#self.available_sup_items + 1] = { item = obj, item_bonus = part_bonus }
 				end
 			end
 		end)
 		
-		self.CC[2]:Reinit(inv,inf)
+		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
 		
 		local clr_b = utils_xml.get_color("pda_blue",true)
 		local fnt = GetFontSmall()
@@ -282,38 +306,70 @@ function UIRepair:OnItemSelect(n)
 		con = is_part_match and obj_n:condition() or ini_sys:r_float_ex(sec,"repair_part_bonus") or self.part_bonus
 		con = (game_achievements.has_achievement("mechanized_warfare")) and (con + 0.02) or con
 		con = clamp(math.floor(con*100)*self.parts_multi , 0 , 100)
-	end
-	
-	-- Text (Name)
-	local name = ui_item.get_sec_name(sec)
-	self.text_item[n]:SetText(name)
-	
-	-- Text (Condition)
-	self.con_val[1] = math.ceil((obj_1:condition())*100)
-	self.con_val[2] = ((n == 2) and con) or 0
-	self.con_val[3] = math.floor((self.add_condition)*100)
-	self.con_val[4] = clamp(self.con_val[1] + self.con_val[2] + self.con_val[3], 0, 100)
-	if IsItem("part",nil,obj_1) then
-		self.con_val[4] = utils_item.get_cond_static(self.con_val[4])
-	end
-	
-	self.con_txt[1]:SetText(utils_xml.get_color_con(self.con_val[1]) .. game.translate_string("st_ui_oldcon") .. ": +" .. self.con_val[1] .. "%")
-	self.con_txt[2]:SetText(self.clr_b .. game.translate_string("st_ui_bonus") .. ": +" .. self.con_val[2] .. "%")
-	self.con_txt_base:SetText(game.translate_string("st_ui_repair") .. ": +" .. self.con_val[3] .. "%")
-	self.con_txt_new:SetText(utils_xml.get_color_con(self.con_val[4]) .. game.translate_string("st_ui_total") .. ": +" .. self.con_val[4] .. "%")
-	
-	-- Icon
-	self.cell_item[n]:Set(obj_n)
 
-	-- Reset supportive item when you choose main item
-	if (n == 1) and self.use_parts then
-		self.cell_item[2]:Reset()
-		self.text_item[2]:SetText("")
-		--self.con_txt[1]:SetText("")
-		--self.con_txt[2]:SetText("")
-		--self.con_txt_base:SetText("")
+		self.selected_sup_items[#self.selected_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.available_sup_items, obj_n)}
+
+		self:removeSupItem(self.available_sup_items, obj_n)
+		
+		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
+		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
 	end
-	
+	if n == 3 then
+		self.available_sup_items[#self.available_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.selected_sup_items, obj_n)}
+		self:removeSupItem(self.selected_sup_items, obj_n)
+		
+		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
+		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
+	end
+
+	if n ~= 3 then
+		-- Text (Name)
+		local name = ui_item.get_sec_name(sec)
+		self.text_item[n]:SetText(name)
+		
+		-- Text (Condition)
+		self.con_val[1] = math.ceil((obj_1:condition())*100)
+		self.con_val[2] = ((n == 2) and con) or 0
+		self.con_val[3] = math.floor((self.add_condition)*100)
+		self.con_val[4] = clamp(self.con_val[1] + self.con_val[2] + self.con_val[3], 0, 100)
+		if IsItem("part",nil,obj_1) then
+			self.con_val[4] = utils_item.get_cond_static(self.con_val[4])
+		end
+		
+		self.con_txt[1]:SetText(utils_xml.get_color_con(self.con_val[1]) .. game.translate_string("st_ui_oldcon") .. ": +" .. self.con_val[1] .. "%")
+		self.con_txt[2]:SetText(self.clr_b .. game.translate_string("st_ui_bonus") .. ": +" .. self.con_val[2] .. "%")
+		self.con_txt_base:SetText(game.translate_string("st_ui_repair") .. ": +" .. self.con_val[3] .. "%")
+		self.con_txt_new:SetText(utils_xml.get_color_con(self.con_val[4]) .. game.translate_string("st_ui_total") .. ": +" .. self.con_val[4] .. "%")
+		
+		-- Icon
+		self.cell_item[n]:Set(obj_n)
+
+		-- Reset supportive item when you choose main item
+		if (n == 1) and self.use_parts then
+			self.cell_item[2]:Reset()
+			self.text_item[2]:SetText("")
+			--self.con_txt[1]:SetText("")
+			--self.con_txt[2]:SetText("")
+			--self.con_txt_base:SetText("")
+		end
+	end
+
+	local clr_b = utils_xml.get_color("pda_blue",true)
+	local fnt = GetFontSmall()
+	for _,ci in pairs(self.CC[2].cell) do
+		if ci:IsShown() then
+			local con100 = ci.flags.info
+			ci:Add_CustomText( ("+"..con100), nil, nil, clr_b, fnt)
+		end
+	end
+
+	for _,ci in pairs(self.CC[3].cell) do
+		if ci:IsShown() then
+			local con100 = ci.flags.info
+			ci:Add_CustomText( ("+"..con100), nil, nil, clr_b, fnt)
+		end
+	end
+
 	self.btn_repair:Enable(true)
 end
 
@@ -368,8 +424,42 @@ end
 
 function UIRepair:OnCancel()
 	utils_obj.play_sound("interface\\inv_close")
-	
+	self.available_sup_items = {}
+	self.selected_sup_items = {}
 	self:HideDialog()
 	
 	Unregister_UI("UIRepair")
+end
+
+function UIRepair:getInfoForObject(list, object)
+	for _, obj in ipairs(list) do
+        if obj.item:id() == object:id() then
+            return obj.item_bonus
+        end
+    end
+end
+
+function UIRepair:removeSupItem(list, objectToRemove)
+    for i, obj in ipairs(list) do
+        if obj.item:id() == objectToRemove:id() then
+            table.remove(list, i)
+            break
+        end
+    end
+end
+
+function UIRepair:getSeparatedLists(specialObj)
+    local itemList = {}
+    local itemInfoList = {}
+
+	if specialObj then
+		for i, obj in ipairs(specialObj) do
+			itemList[i] = obj.item
+			itemInfoList[i] = obj.item_bonus
+
+			printf("Item: %s Bonus: %s", obj.item, obj.item_bonus)
+		end
+	end
+
+    return itemList, itemInfoList
 end

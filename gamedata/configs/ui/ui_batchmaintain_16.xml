@@ -22,7 +22,7 @@
 		
 		<!-- Weapon big icon -->
 		<box_item_1 x="560" y="390" width="226" height="111" stretch="1"/>
-		<back_item_1 x="560" y="384" width="240" height="125" stretch="1">
+		<back_item_1 x="560" y="390" width="240" height="125" stretch="1">
 			<texture>ui_inGame2_workshop_big_item_menu</texture>
 		</back_item_1>
 		<box_campfire x="404" y="86" width="231" height="319" stretch="1">
@@ -30,11 +30,10 @@
 		</box_campfire>
 		
 		<!-- Weapon name -->
-		<text_item_1 x="645" y="507" width="240" height="32">
+		<text_item_1 x="563" y="507" width="240" height="32">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</text_item_1>
 		
-	
 		<!-- Item 2 -->
 		<!-- Supportive materials -->
 		<cap_repair_2 x="265" y="105" width="150" height="39">
@@ -46,15 +45,18 @@
 		
 		<!-- Supportive material list -->
 		<cont_inv_2 x="205" y="140" width="300" height="226" stretch="1"/>
-		
-		<!-- Supportive material big icon -->
-		<box_item_2 x="226" y="390" width="226" height="111" stretch="1"/>
-		<back_item_2 x="226" y="384" width="240" height="125" stretch="1">
+
+		<!-- Selected supp material list -->
+		<selected_supp_mats x="230" y="400" width="226" height="111" stretch="1"/>
+		<back_item_2 x="223" y="390" width="240" height="125" stretch="1">
 			<texture>ui_inGame2_workshop_big_item_menu</texture>
 		</back_item_2>
 		
-
-		<text_item_2 x="74" y="507" width="240" height="32">
+		<!-- Supportive material big icon -->
+		<box_item_2 x="0" y="0" width="0" height="111" stretch="1"/>
+		
+		<!-- Support item name -->
+		<text_item_2 x="229" y="507" width="240" height="32">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</text_item_2>
 
@@ -64,10 +66,15 @@
 		</con_item_1>
 
 		<!-- Bonus % -->
-		<con_item_2 x="392" y="483" width="72" height="18">
+		<con_item_2 x="477" y="457" width="72" height="18">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</con_item_2>
 		
+		<!-- <debug_element x="392" y="483" width="72" height="18" stretch="1">
+			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">ui_mm_back</text>
+			<texture>ui_button_ordinary</texture>
+		</debug_element> -->
+
 		<!-- Repair item base +% -->
 		<con_item_base x="477" y="483" width="72" height="18">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
