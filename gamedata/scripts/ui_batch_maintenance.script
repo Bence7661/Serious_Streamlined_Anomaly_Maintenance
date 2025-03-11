@@ -41,10 +41,14 @@ function UIRepair:__init(obj,section) super()
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
 
-	-- self.selected_suppitems = {}
-	-- self.available_suppitems = {}
-	-- self.info_selected_suppitems = {}
-	-- self.info_available_suppitems = {}
+	--Kit and uses
+	self.kits = 
+	{
+		actual = "",		--object
+		uses = "",			--int
+		depleted = false	-- bool, will set manually when last use procced.
+	}
+
 	-- Reload settings
 	self.clr_b = utils_xml.get_color("pda_blue")
 
@@ -73,14 +77,18 @@ function UIRepair:InitControls()
 	self.con_txt       = {}
 	self.CC            = {}
 
+	self.cell_item[1]         = utils_ui.UICellItem( {path="container" , xml=xml} , { path="repair:box_item_1", base= self.dialog } )
+	self.cell_item[1].disable_bar = true
+
+	for i=1,4 do
+		self.b_item[i]            = xml:InitStatic("repair:back_item_" .. tostring(i) , self.dialog)
+	end
+
 	for i=1,2 do
 		self.cap[i]               = xml:InitStatic("repair:cap_repair_" .. tostring(i),self.dialog)
-		self.b_item[i]            = xml:InitStatic("repair:back_item_" .. tostring(i) , self.dialog)
 		self.text_item[i]         = xml:InitTextWnd("repair:text_item_" .. tostring(i) , self.dialog)
 		self.con_txt[i]           = xml:InitTextWnd("repair:con_item_" .. tostring(i) , self.dialog)
 
-		self.cell_item[i]         = utils_ui.UICellItem( {path="container" , xml=xml} , { path="repair:box_item_" .. tostring(i) , base= self.dialog } )
-		self.cell_item[i].disable_bar = true
 
 		self.CC[i]                = utils_ui.UICellContainer(i, self, nil, "repair:cont_inv_" .. tostring(i), self.dialog)
 		self.CC[i].can_select	  = true
@@ -114,7 +122,7 @@ function UIRepair:InitControls()
 end
 
 function UIRepair:InitCallBacks()
-	self:AddCallback("btn_repair", ui_events.BUTTON_CLICKED, self.OnRepair, self)
+	self:AddCallback("btn_repair", ui_events.BUTTON_CLICKED, self.OnBatchRepair, self)
 	self:AddCallback("btn_cancel", ui_events.BUTTON_CLICKED, self.OnCancel, self)
 end
 
@@ -152,7 +160,7 @@ function UIRepair:Reset(obj,section)
 	self.text_item[1]:SetText("")
 	self.text_item[2]:SetText("")
 	self.cell_item[1]:Reset()
-	self.cell_item[2]:Reset()
+	-- self.cell_item[2]:Reset()
 	self.con_txt_base:SetText("")
 	self.con_txt_new:SetText("")
 	self.btn_repair:Enable(false)
@@ -160,6 +168,8 @@ function UIRepair:Reset(obj,section)
 	local to_show = self.use_parts and true or false
 	self.cap[2]:Show(to_show)
 	self.b_item[2]:Show(to_show)
+	self.b_item[3]:Show(to_show)
+	self.b_item[4]:Show(to_show)
 	self.text_item[2]:Show(to_show)
 	self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
@@ -194,7 +204,14 @@ function UIRepair:InitInventory(n)
 	
 	-- Compatible weapons list to repair
 	if n == 1 then
+	self.kits = {}
 		db.actor:iterate_inventory( function(owner, obj)
+
+			if (obj:section() == self.obj:section()) then
+				printf("InitInventory object sect: %s, self.object: ", obj:section(), self.obj:section())
+				self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
+			end
+
 			local sec = obj:section()
 			local main_section = ini_sys:r_string_ex(sec,"repair_type") or sec
 			if (self.repair_only and self.repair_only[main_section]) then
@@ -234,7 +251,7 @@ function UIRepair:InitInventory(n)
 			end
 		end)
 		
-		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
+		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
 		
 		local clr_b = utils_xml.get_color("pda_blue",true)
 		local fnt = GetFontSmall()
@@ -314,8 +331,8 @@ function UIRepair:OnItemSelect(n)
 		
 		self.text_item[2]:SetText("Added: " .. name)
 
-		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
-		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
+		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
+		self.CC[3]:Reinit(self:prepareForUi(self.selected_sup_items))
 	end
 	if n == 3 then
 		self.available_sup_items[#self.available_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.selected_sup_items, obj_n)}
@@ -323,8 +340,8 @@ function UIRepair:OnItemSelect(n)
 		
 		self.text_item[2]:SetText("Removed: " .. name)
 
-		self.CC[2]:Reinit(self:getSeparatedLists(self.available_sup_items))
-		self.CC[3]:Reinit(self:getSeparatedLists(self.selected_sup_items))
+		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
+		self.CC[3]:Reinit(self:prepareForUi(self.selected_sup_items))
 	end
 
 	if n ~= 3 then
@@ -342,13 +359,12 @@ function UIRepair:OnItemSelect(n)
 		self.con_txt_base:SetText(game.translate_string("st_ui_repair") .. ": +" .. self.con_val[3] .. "%")
 		self.con_txt_new:SetText(utils_xml.get_color_con(self.con_val[4]) .. game.translate_string("st_ui_total") .. ": +" .. self.con_val[4] .. "%")
 		
-		-- Icon
-		self.cell_item[n]:Set(obj_n)
 		
 		-- Reset supportive item when you choose main item
 		if (n == 1) and self.use_parts then
+			-- Icon
+			self.cell_item[1]:Set(obj_n)
 			self.text_item[1]:SetText(name)
-			self.cell_item[2]:Reset()
 			self.text_item[2]:SetText("")
 			self.selected_sup_items = {}
 			self.CC[3]:Reinit({},{})
@@ -380,14 +396,14 @@ end
 function UIRepair:OnRepair()
 	local obj_1 = self.CC[1]:GetCell_Selected(true)
 	local obj_2 = self.CC[2]:GetCell_Selected(true)
-	
+
 	if not (obj_1 and self.con_val[4]) then return end
 
 	obj_1:set_condition(self.con_val[4] / 100) -- Repair main item
 	if obj_2 then
 		utils_item.discharge(obj_2) -- Remove 1 use of the support item
 	end
-	
+
 	-- Remove 1 use of the repair kit
 	if IsItem("multiuse",nil,self.obj) then
 		utils_item.discharge(self.obj) 
@@ -403,6 +419,51 @@ function UIRepair:OnRepair()
 	-- Increase Statistic
 	game_statistics.increment_statistic("self_repairs")
 	
+	-- Hide dialog
+	self:OnCancel()
+end
+
+function UIRepair:OnBatchRepair()
+	local damagedWeapon = self.CC[1]:GetCell_Selected(true)
+	local kitIteration = 1
+
+	for _, kit in ipairs(self.kits) do
+		
+		while not kit.depleted and damagedWeapon:condition() < 0.98 do
+			local supItemInQueue = self.selected_sup_items[kitIteration]
+			local supItemBonus = (supItemInQueue and supItemInQueue.item_bonus or 0)
+			local repairAmount = supItemBonus + math.floor((self.add_condition)*100) -- 5% + 9%
+
+			local condToSet = clamp(repairAmount + damagedWeapon:condition() * 100, 0, 100) / 100
+
+			-- damagedWeapon:set_condition(self.con_val[4] / 100) --OLD METHOD.
+			damagedWeapon:set_condition(condToSet)
+	
+			if IsItem("multiuse",nil,kit.actual) then
+				utils_item.discharge(kit.actual)
+				kit.uses = kit.uses -1
+
+	
+				if kit.uses <= 0 then
+					kit.depleted = true
+				end
+
+			else --Will need to rethink this kit thing. Or I shouldn't allow batch parts repair
+				utils_item.degrade(kit, degrade_factor)
+			end
+
+			if supItemBonus > 0 then
+				if IsItem("multiuse",nil,supItemInQueue.item) then
+					utils_item.discharge(supItemInQueue.item)
+				else
+					utils_item.degrade(supItemInQueue.item, degrade_factor)
+				end
+			end
+
+			kitIteration = kitIteration + 1
+		end
+	end
+
 	-- Hide dialog
 	self:OnCancel()
 end
@@ -452,7 +513,7 @@ function UIRepair:removeSupItem(list, objectToRemove)
     end
 end
 
-function UIRepair:getSeparatedLists(specialObj)
+function UIRepair:prepareForUi(specialObj)
     local itemList = {}
     local itemInfoList = {}
 
@@ -460,8 +521,6 @@ function UIRepair:getSeparatedLists(specialObj)
 		for i, obj in ipairs(specialObj) do
 			itemList[i] = obj.item
 			itemInfoList[i] = obj.item_bonus
-
-			printf("Item: %s Bonus: %s", obj.item, obj.item_bonus)
 		end
 	end
 
