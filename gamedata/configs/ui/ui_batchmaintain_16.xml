@@ -18,6 +18,11 @@
 		<cap_repair_2 x="265" y="105" width="150" height="39">
 			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_repair_support</text>
 		</cap_repair_2>
+
+		<!-- Repair rundown caption -->
+		<cap_repair_3 x="229" y="390" width="240" height="32">
+			<text r="200" g="200" b="200" vert_align="c" font="letterica16">Repair details</text>
+		</cap_repair_3>
 	<!-- /Captions -->
 
 	<!-- List boxes -->
@@ -40,11 +45,27 @@
 		</back_item_2>
 	<!-- /List boxes -->
 
-		<!-- <debug_element x="212" y="156" width="260" height="78" stretch="1">
-			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">DEBUG ELEMENT</text>
-			<texture>ui_button_ordinary</texture>
-		</debug_element> -->
+	<!-- Repair details -->
+		<repair_kit_base x="229" y="420" width="150" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+		</repair_kit_base>
 
+		<repairs_needed x="229" y="438" width="150" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+		</repairs_needed>
+
+		<total_sup_item_bonus x="229" y="456" width="150" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+		</total_sup_item_bonus>
+
+		<sup_bonus_breakdown x="229" y="474" width="150" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+		</sup_bonus_breakdown>
+
+		<repair_items_consumed x="229" y="492" width="150" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+		</repair_items_consumed>
+	<!-- /Repair details -->
 
 		<!-- Item 1 -->
 		<cap_cook_1 x="364" y="70" width="304" height="39">
@@ -75,29 +96,22 @@
 		<box_item_2 x="0" y="0" width="0" height="111" stretch="1"/>
 		
 		<!-- Support item name -->
-		<text_item_2 x="229" y="507" width="240" height="32">
+		<text_item_2 x="229" y="347" width="240" height="32">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</text_item_2>
 
 		<!-- Old % -->
-		<con_item_1 x="553" y="483" width="72" height="18">
-			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
+		<con_item_1 x="571" y="485" width="72" height="18">
+			<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
 		</con_item_1>
 
-		<!-- Bonus % -->
-		<con_item_2 x="477" y="457" width="72" height="18">
-			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
-		</con_item_2>
-		
-
-
-		<!-- Repair item base +% -->
-		<con_item_base x="477" y="483" width="72" height="18">
-			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
-		</con_item_base>
+		<debug_element x="571" y="485" width="72" height="18" stretch="1">
+			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">DEBUG ELEMENT</text>
+			<texture>ui_button_ordinary</texture>
+		</debug_element>
 
 		<!-- Repair total -->
-		<con_item_1_new x="723" y="483" width="72" height="18">
+		<con_item_1_new x="723" y="485" width="72" height="18">
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</con_item_1_new>
 
