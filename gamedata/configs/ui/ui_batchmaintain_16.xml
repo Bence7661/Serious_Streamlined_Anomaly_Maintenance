@@ -1,7 +1,7 @@
 <w>
 	<repair x="0" y="0" width="1024" height="768" stretch="1">
 		<background x="109" y="4" width="1490" height="976" stretch="1">
-			<texture>ui_batch_maintenance_2</texture>
+			<texture>ui_batch_maintenance</texture>
 		</background>
 	
 		<cap_tab x="149" y="52" width="245" height="30">
