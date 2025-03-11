@@ -11,7 +11,7 @@ function define_option(obj, bag, mode)
 end
 
 function batch_maintenance(obj, bag, mode)
-    local ui = ui_batch_maintenance and ui_batch_maintenance.start(obj)
+    local ui = serious_ui_batch_maintenance and serious_ui_batch_maintenance.start(obj)
     if (ui) then
         ui:ShowDialog(true)
     end
