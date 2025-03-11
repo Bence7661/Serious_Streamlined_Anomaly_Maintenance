@@ -1,24 +1,55 @@
 <w>
 	<repair x="0" y="0" width="1024" height="768" stretch="1">
 		<background x="109" y="4" width="1490" height="976" stretch="1">
-			<texture>ui_batch_maintenance</texture>
+			<texture>ui_batch_maintenance_2</texture>
 		</background>
 	
 		<cap_tab x="149" y="52" width="245" height="30">
 			<text complex_mode="1" r="200" g="200" b="200" align="c" vert_align="c" font="letterica18"/>
 		</cap_tab>
 		
-		<!-- Item 1 -->
-		<!-- Damaged items -->
+	<!-- Captions -->
+		<!-- Weapon list-->
 		<cap_repair_1 x="598" y="107" width="150" height="39">
 			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_repair_base</text>
 		</cap_repair_1>
+
+		<!-- Supportive materials -->
+		<cap_repair_2 x="265" y="105" width="150" height="39">
+			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_repair_support</text>
+		</cap_repair_2>
+	<!-- /Captions -->
+
+	<!-- List boxes -->
+		<!-- Weapon list-->
+		<cont_inv_1 x="542" y="152" width="260" height="206" stretch="1"/>
+		<back_item_3 x="532" y="143" width="280" height="226" stretch="1">
+			<texture>ui_inGame2_workshop_big_item_menu</texture>
+		</back_item_3>
+
+		<!-- Supportive material list -->
+		<cont_inv_2 x="212" y="156" width="260" height="78" stretch="1"/>
+		<back_item_4 x="205" y="143" width="280" height="95" stretch="1">
+			<texture>ui_inGame2_workshop_big_item_menu</texture>
+		</back_item_4>
+
+		<!-- Selected supp material list -->
+		<selected_supp_mats x="230" y="270" width="226" height="78" stretch="1"/>
+		<back_item_2 x="223" y="260" width="240" height="95" stretch="1">
+			<texture>ui_inGame2_workshop_big_item_menu</texture>
+		</back_item_2>
+	<!-- /List boxes -->
+
+		<!-- <debug_element x="212" y="156" width="260" height="78" stretch="1">
+			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">DEBUG ELEMENT</text>
+			<texture>ui_button_ordinary</texture>
+		</debug_element> -->
+
+
+		<!-- Item 1 -->
 		<cap_cook_1 x="364" y="70" width="304" height="39">
 			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_cook_fuel</text>
 		</cap_cook_1>
-
-		<!-- Weapon list-->
-		<cont_inv_1 x="532" y="143" width="300" height="226" stretch="1"/>
 		
 		<!-- Weapon big icon -->
 		<box_item_1 x="560" y="390" width="226" height="111" stretch="1"/>
@@ -35,22 +66,10 @@
 		</text_item_1>
 		
 		<!-- Item 2 -->
-		<!-- Supportive materials -->
-		<cap_repair_2 x="265" y="105" width="150" height="39">
-			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_repair_support</text>
-		</cap_repair_2>
+
 		<cap_cook_2 x="39" y="70" width="304" height="39">
 			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_cook_food</text>
 		</cap_cook_2>
-		
-		<!-- Supportive material list -->
-		<cont_inv_2 x="205" y="140" width="300" height="226" stretch="1"/>
-
-		<!-- Selected supp material list -->
-		<selected_supp_mats x="230" y="400" width="226" height="111" stretch="1"/>
-		<back_item_2 x="223" y="390" width="240" height="125" stretch="1">
-			<texture>ui_inGame2_workshop_big_item_menu</texture>
-		</back_item_2>
 		
 		<!-- Supportive material big icon -->
 		<box_item_2 x="0" y="0" width="0" height="111" stretch="1"/>
@@ -70,10 +89,7 @@
 			<text complex_mode="1" r="150" g="150" b="150" align="c" vert_align="c" font="letterica16"/>
 		</con_item_2>
 		
-		<!-- <debug_element x="392" y="483" width="72" height="18" stretch="1">
-			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">ui_mm_back</text>
-			<texture>ui_button_ordinary</texture>
-		</debug_element> -->
+
 
 		<!-- Repair item base +% -->
 		<con_item_base x="477" y="483" width="72" height="18">
