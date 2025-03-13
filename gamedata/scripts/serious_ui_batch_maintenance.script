@@ -395,6 +395,10 @@ function UIRepair:OnItemSelect(n)
 		end
 	end
 
+	table.sort(self.selected_sup_items, function(a, b)
+		return a.item_bonus > b.item_bonus  -- Sort in descending order. This optimizes support item usage.
+	end)
+
 	local repairInfo = self:calculateRepairInfo(obj_1)
 
 	self.repairs_needed:SetText("Repairs needed: " .. repairInfo[1])
@@ -595,10 +599,12 @@ function UIRepair:calculateRepairInfo(selectedItem)
 
 			local condToSet = clamp(repairAmount + itemCondition * 100, 0, 100) / 100
 			
+			local currentCondPart = " -> +" .. tostring(math.ceil(condToSet * 100)) .. "%" -- Example: "-> +24%"
 			if #repairs_breakdown <= 1 then
-				repairs_breakdown = string.format("+%s%% -> +%s%%", math.ceil(itemCondition * 100), math.ceil(condToSet * 100))
+				local initialCondStat = "+" .. tostring(math.ceil(itemCondition * 100)) .. "%" -- Example: "+50%"
+				repairs_breakdown = utils_xml.get_color_con(math.ceil(itemCondition * 100)) .. initialCondStat ..  utils_xml.get_color_con(condToSet * 100) .. currentCondPart -- Example: "+50 -> +24%"
 			else
-				repairs_breakdown = string.format("%s -> +%s%%", repairs_breakdown, math.ceil(condToSet * 100))
+				repairs_breakdown = repairs_breakdown .. utils_xml.get_color_con(condToSet * 100) .. currentCondPart
 			end
 			
 			itemCondition = condToSet
@@ -639,7 +645,7 @@ function UIRepair:calculateRepairInfo(selectedItem)
 	elseif repairItemsConsumed > 2 then repairItemsConsumed = utils_xml.get_color("d_red") .. tostring(repairItemsConsumed)
 	end
 
-	repairs_breakdown = utils_xml.get_color("pda_blue") .. repairs_breakdown
+	-- repairs_breakdown = utils_xml.get_color("pda_blue") .. repairs_breakdown
 
 	return
 	{

@@ -67,12 +67,12 @@
 			<text complex_mode="1" r="150" g="150" b="150" font="letterica16"/>
 		</repair_items_consumed>
 
-		<repairs_breakdown x="229" y="481" width="320" height="18">
+		<repairs_breakdown x="229" y="481" width="250" height="18">
 			<text complex_mode="1" r="150" g="150" b="150"  font="letterica16"/>
 		</repairs_breakdown>
 	<!-- /Repair details -->
 
-		<debug_element x="229" y="481" width="320" height="18" stretch="1">
+		<debug_element x="229" y="481" width="280" height="18" stretch="1">
 			<text r="150" g="150" b="150" font="letterica16" >DEBUG ELEMENT</text>
 			<texture>ui_button_ordinary</texture>
 		</debug_element>
