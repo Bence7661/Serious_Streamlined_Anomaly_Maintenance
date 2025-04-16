@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="windows-1251" ?>
+<string_table>
+	<string id="st_repair_details">
+		<text>Repair details</text>
+	</string>
+	<string id="st_batch_repair">
+		<text>Batch repair</text>
+	</string>
+	<string id="st_batch_1">
+		<text>Base: </text>
+	</string>
+	<string id="st_batch_2">
+		<text>Repairs needed: </text>
+	</string>
+	<string id="st_batch_3">
+		<text>Total support bouns: </text>
+	</string>
+	<string id="st_batch_4">
+		<text>Breakdown: </text>
+	</string>
+	<string id="st_batch_5">
+		<text>Items consumed: </text>
+	</string>
+	<string id="st_batch_6">
+		<text>Repairs breakdown: </text>
+	</string>
+	<string id="st_batch_7">
+		<text>Added: </text>
+	</string>
+	<string id="st_batch_8">
+		<text>Removed: </text>
+	</string>
+</string_table>

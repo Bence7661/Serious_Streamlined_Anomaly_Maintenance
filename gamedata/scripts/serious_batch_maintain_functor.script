@@ -1,3 +1,5 @@
+local gt = game.translate_string
+
 function option_appear_cond(obj, bag, mode)
     if IsItem("repair",obj:section()) then
 		return true
@@ -7,7 +9,7 @@ function option_appear_cond(obj, bag, mode)
 end
 
 function define_option(obj, bag, mode)
-	return "batch maintain"
+	return gt("st_batch_repair")
 end
 
 function batch_maintenance(obj, bag, mode)

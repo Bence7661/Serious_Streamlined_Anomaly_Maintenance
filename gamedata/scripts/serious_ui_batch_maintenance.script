@@ -1,5 +1,5 @@
 local degrade_factor = 0.2
-
+local gt = game.translate_string
 
 ----------------------------------------------------------------------
 GUI = nil -- instance, don't touch
@@ -192,12 +192,12 @@ function UIRepair:Reset(obj,section)
 	-- Set Repair kit name
 	self.cap_menu:SetText(ui_item.get_sec_name(self.section))
 	
-	self.repair_kit_base:SetText("Base: " .. utils_xml.get_color("pda_white") .. "+" .. tostring(self.add_condition * 100) .. "%")
-	self.repairs_needed:SetText("Repairs needed: -")
-	self.total_sup_item_bonus:SetText("Total support item bouns: -")
-	self.sup_bonus_breakdown:SetText("Breakdown: -")
-	self.repair_items_consumed:SetText("Items consumed: -")
-	self.repairs_breakdown:SetText("Repairs breakdown: -")
+	self.repair_kit_base:SetText(gt("st_batch_1") .. utils_xml.get_color("pda_white") .. "+" .. tostring(self.add_condition * 100) .. "%")
+	self.repairs_needed:SetText(gt("st_batch_2"))
+	self.total_sup_item_bonus:SetText(gt("st_batch_3"))
+	self.sup_bonus_breakdown:SetText(gt("st_batch_4"))
+	self.repair_items_consumed:SetText(gt("st_batch_5"))
+	self.repairs_breakdown:SetText(gt("st_batch_6"))
 	self.repair_kit_base:Show(true)
 	self.repairs_needed:Show(true)
 	self.total_sup_item_bonus:Show(true)
@@ -355,7 +355,7 @@ function UIRepair:OnItemSelect(n)
 		if self.amount_of_repairs == 0 or self.amount_of_repairs > #self.selected_sup_items then
 			self.selected_sup_items[#self.selected_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.available_sup_items, obj_n)}
 			self:removeSupItem(self.available_sup_items, obj_n)
-			self.text_item[2]:SetText("Added: " .. name)
+			self.text_item[2]:SetText(gt("st_batch_7" .. name))
 		end
 		
 
@@ -366,7 +366,7 @@ function UIRepair:OnItemSelect(n)
 		self.available_sup_items[#self.available_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.selected_sup_items, obj_n)}
 		self:removeSupItem(self.selected_sup_items, obj_n)
 		
-		self.text_item[2]:SetText("Removed: " .. name)
+		self.text_item[2]:SetText(gt("st_batch_8" .. name))
 
 		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
 		self.CC[3]:Reinit(self:prepareForUi(self.selected_sup_items))
@@ -401,12 +401,12 @@ function UIRepair:OnItemSelect(n)
 
 	local repairInfo = self:calculateRepairInfo(obj_1)
 
-	self.repairs_needed:SetText("Repairs needed: " .. repairInfo[1])
-	self.total_sup_item_bonus:SetText("Total support item bouns: " .. repairInfo[2] .. "%")
-	self.sup_bonus_breakdown:SetText("Breakdown: " .. repairInfo[3])
-	self.repair_items_consumed:SetText("Items consumed: " .. repairInfo[4])
+	self.repairs_needed:SetText(gt("st_batch_2") .. repairInfo[1])
+	self.total_sup_item_bonus:SetText(gt("st_batch_3") .. repairInfo[2] .. "%")
+	self.sup_bonus_breakdown:SetText(gt("st_batch_4") .. repairInfo[3])
+	self.repair_items_consumed:SetText(gt("st_batch_5") .. repairInfo[4])
 	self.con_txt_new:SetText(utils_xml.get_color_con(repairInfo[5]) .. game.translate_string("st_ui_total") .. ": +" .. repairInfo[5] .. "%")
-	self.repairs_breakdown:SetText("Repairs breakdown: " .. repairInfo[6])
+	self.repairs_breakdown:SetText(gt("st_batch_6") .. repairInfo[6])
 	
 	local clr_b = utils_xml.get_color("pda_blue",true)
 	local fnt = GetFontSmall()

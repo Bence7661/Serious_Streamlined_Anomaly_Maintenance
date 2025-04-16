@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="windows-1251" ?>
+<string_table>
+	<string id="st_repair_details">
+		<text>Подробности о ремонте</text>
+	</string>
+	<string id="st_batch_repair">
+		<text>Полный ремонт</text>
+	</string>
+	<string id="st_batch_1">
+		<text>Базовый бонус: </text>
+	</string>
+	<string id="st_batch_2">
+		<text>Починок нужно: </text>
+	</string>
+	<string id="st_batch_3">
+		<text>Общий возможный бонус: </text>
+	</string>
+	<string id="st_batch_4">
+		<text>Поломка: </text>
+	</string>
+	<string id="st_batch_5">
+		<text>Потребляемые предметы: </text>
+	</string>
+	<string id="st_batch_6">
+		<text>Ремонт поломки: </text>
+	</string>
+	<string id="st_batch_7">
+		<text>Добавлено: </text>
+	</string>
+	<string id="st_batch_8">
+		<text>Убрано: </text>
+	</string>
+</string_table>

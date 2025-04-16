@@ -22,9 +22,11 @@
 		<!-- Repair rundown caption -->
 		<cap_repair_3 x="229" y="361" width="240" height="32">
 		<!-- <cap_repair_3 x="229" y="390" width="240" height="32"> -->
-			<text r="200" g="200" b="200" font="letterica16">Repair details</text>
+			<text r="200" g="200" b="200" font="letterica16">st_repair_details</text>
 		</cap_repair_3>
 	<!-- /Captions -->
+
+<!--Slider script example: https://github.com/Tosox/STALKER-Anomaly-gamedata/blob/v1.5.2/gamedata/scripts/ui_ctrl_lighting.script-->
 
 	<!-- List boxes -->
 		<!-- Weapon list-->
@@ -122,7 +124,7 @@
 
 		<btn_repair x="300" y="580" width="150" height="37">
 			<!-- <text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">ui_mm_repair</text> -->
-			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">Batch Repair</text>
+			<text r="150" g="150" b="150" font="letterica16" align="c" vert_align="c">st_batch_repair</text>
 			<texture>ui_button_ordinary</texture>
 		</btn_repair>
 		<btn_cook x="113" y="568" width="150" height="37">
