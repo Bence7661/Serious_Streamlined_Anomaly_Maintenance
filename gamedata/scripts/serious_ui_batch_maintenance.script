@@ -8,20 +8,20 @@ function start(obj, sec)
 		printf("!ERROR item_repair | no game object passed!")
 		return
 	end
-	
+
 	if (not sec) then
 		sec = obj:section()
 	end
-	
+
 	local hud = get_hud()
 	if (hud) then
 		hide_hud_inventory()
 	end
-	
+
 	if (not GUI) then
 		GUI = UIRepair()
 	end
-	
+
 	if (GUI) and (not GUI:IsShown()) then
 		GUI:Reset(obj, sec)
 		GUI:ShowDialog(true)
@@ -40,17 +40,18 @@ function UIRepair:__init(obj,section) super()
 
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
+	self.depleted_kit_ids = {}
 
 	--Kit and uses
-	self.kits = 
+	self.kits =
 	{
-		actual = "",		--object
-		uses = "",			--int
+		actual = nil,		--object
+		uses = 0,			--int
 		depleted = false	-- bool, will set manually when last use procced.
 	}
 
 	self.amount_of_repairs = 0
-	
+
 	-- Reload settings
 	self.clr_b = utils_xml.get_color("pda_blue")
 
@@ -67,7 +68,7 @@ function UIRepair:InitControls()
 	self.xml				= CScriptXmlInit()
 	local xml = self.xml
 	xml:ParseFile			("ui_batchmaintain_16.xml")
-	
+
 	self.dialog					= xml:InitStatic("repair", self)
 	xml:InitStatic("repair:background", self.dialog)
 	self.cap_menu 					= xml:InitTextWnd("repair:cap_tab" , self.dialog)
@@ -120,13 +121,13 @@ function UIRepair:InitControls()
 	self.sup_bonus_breakdown = xml:InitTextWnd("repair:sup_bonus_breakdown" , self.dialog)
 	self.repair_items_consumed = xml:InitTextWnd("repair:repair_items_consumed" , self.dialog)
 	self.repairs_breakdown = xml:InitTextWnd("repair:repairs_breakdown" , self.dialog)
-	
+
 	self.item_info = utils_ui.UIInfoItem(self, 1000)
-	
+
 	-- Main Buttons
 	self.btn_repair = xml:Init3tButton("repair:btn_repair", self.dialog)
 	self:Register(self.btn_repair,"btn_repair")
-	
+
 	self.btn_cancel = xml:Init3tButton("repair:btn_back", self.dialog)
 	self:Register(self.btn_cancel,"btn_cancel")
 
@@ -143,7 +144,7 @@ end
 function UIRepair:Reset(obj,section)
 	self.section = section
 	self.obj = obj
-	
+
 	-- Settings
 	self.repair_frame      = ini_sys:r_string_ex(section,"repair_ui") or "ui_itm_repair_1"
 	self.use_condition     = ini_sys:r_bool_ex(section,"use_condition") or false
@@ -152,14 +153,14 @@ function UIRepair:Reset(obj,section)
 	self.add_condition     = ini_sys:r_float_ex(section,"repair_add_condition") or 0
 	self.part_bonus        = ini_sys:r_float_ex(section,"repair_part_bonus") or 0
 	self.use_parts         = ini_sys:r_bool_ex(section,"repair_use_parts") or false
-	self.repair_type       = ini_sys:r_string_ex(section,"repair_type") or "all" 
+	self.repair_type       = ini_sys:r_string_ex(section,"repair_type") or "all"
 	self.repair_only       = parse_list(ini_sys,section,"repair_only",true)
 	self.parts_multi       = ini_sys:r_float_ex(section,"repair_parts_multi") or 1
 	self.parts_sections    = parse_list(ini_sys,section,"repair_parts_sections",true)
 	self.parts_match       = ini_sys:r_bool_ex(section,"repair_parts_match",false)
 	self.use_actor_effects = ini_sys:r_bool_ex(section,"repair_use_actor_effects",false)
 	self.con_val           = {}
-	
+
 	-- Elements
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
@@ -178,7 +179,7 @@ function UIRepair:Reset(obj,section)
 	-- self.con_txt_base:SetText("")
 	self.con_txt_new:SetText("")
 	self.btn_repair:Enable(false)
-	
+
 	local to_show = self.use_parts and true or false
 	self.cap[2]:Show(to_show)
 	self.b_item[2]:Show(to_show)
@@ -188,10 +189,10 @@ function UIRepair:Reset(obj,section)
 	-- self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
 	self.CC[3]:Show(to_show)
-	
+
 	-- Set Repair kit name
 	self.cap_menu:SetText(ui_item.get_sec_name(self.section))
-	
+
 	self.repair_kit_base:SetText(gt("st_batch_1") .. utils_xml.get_color("pda_white") .. "+" .. tostring(self.add_condition * 100) .. "%")
 	self.repairs_needed:SetText(gt("st_batch_2"))
 	self.total_sup_item_bonus:SetText(gt("st_batch_3"))
@@ -209,8 +210,8 @@ function UIRepair:Reset(obj,section)
 	self:InitInventory(1)
 
 	-- Hide active item
-	actor_effects.toggle_active_slot(0) 
-	
+	actor_effects.toggle_active_slot(0)
+
 	-- Play sound
 	if (self.repair_frame == "ui_itm_repair_1") or (self.repair_frame == "ui_itm_repair_2") then
 		utils_obj.play_sound("interface\\inv_zipper_open")
@@ -228,15 +229,16 @@ function UIRepair:InitInventory(n)
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
 	local size_t = 0
-	
+
 	-- Compatible weapons list to repair
 	if n == 1 then
 	self.kits = {}
 		db.actor:iterate_inventory( function(owner, obj)
-
 			if (obj:section() == self.obj:section()) then
 				printf("InitInventory object sect: %s, self.object: ", obj:section(), self.obj:section())
-				self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
+				if not self.depleted_kit_ids[obj:id()] then
+					self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
+				end
 			end
 
 			local sec = obj:section()
@@ -249,7 +251,7 @@ function UIRepair:InitInventory(n)
 				end
 			end
 		end)
-		
+
 		self.CC[1]:Reinit(inv)
 
 	-- Compatible part list to use
@@ -266,20 +268,20 @@ function UIRepair:InitInventory(n)
 					local part_bonus = obj:condition()
 					part_bonus = (game_achievements.has_achievement("mechanized_warfare")) and (part_bonus + 0.02) or part_bonus
 					part_bonus = clamp(math.floor(part_bonus*100)*self.parts_multi , 0 , 100)
-				
+
 					self.available_sup_items[#self.available_sup_items + 1] = { item = obj, item_bonus = part_bonus }
 				elseif (self.parts_sections and self.parts_sections[sec]) then
 					local part_bonus = ini_sys:r_float_ex(sec,"repair_part_bonus") or self.part_bonus
 					part_bonus = (game_achievements.has_achievement("mechanized_warfare")) and (part_bonus + 0.02) or part_bonus
 					part_bonus = clamp(math.floor(part_bonus*100)*self.parts_multi , 0 , 100)
-				
+
 					self.available_sup_items[#self.available_sup_items + 1] = { item = obj, item_bonus = part_bonus }
 				end
 			end
 		end)
-		
+
 		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
-		
+
 		local clr_b = utils_xml.get_color("pda_blue",true)
 		local fnt = GetFontSmall()
 		for idx,ci in pairs(self.CC[2].cell) do
@@ -294,26 +296,26 @@ end
 
 function UIRepair:Update()
 	CUIScriptWnd.Update(self)
-	
+
 	-- Warning messages timer 
-	if (self.msg_wnd_timer and time_global() > self.msg_wnd_timer) then 
+	if (self.msg_wnd_timer and time_global() > self.msg_wnd_timer) then
 		self.msg_wnd_timer = nil
 		self.msg_wnd:Show(false)
 	end
-	
-	for i=1,#self.cell_item do 
+
+	for i=1,#self.cell_item do
 		if (self.cell_item[i] and self.cell_item[i]:IsCursorOverWindow()) then
 			local obj = self.CC[i]:GetCell_Selected(true)
 			if (obj) then
 				self.item_info:Update(obj, obj:section())
 				return
 			end
-			
+
 			self.item_info:Update()
 			return
 		end
 	end
-	
+
 	-- Updating item info box and item cell containers
 	local found_cell = false
 	for name,cc in pairs(self.CC) do
@@ -322,7 +324,7 @@ function UIRepair:Update()
 	if (not found_cell) then
 		self.item_info:Update()
 	end
-end 
+end
 
 -- Callbacks
 function UIRepair:On_CC_Mouse1(cont, idx)
@@ -355,9 +357,9 @@ function UIRepair:OnItemSelect(n)
 		if self.amount_of_repairs == 0 or self.amount_of_repairs > #self.selected_sup_items then
 			self.selected_sup_items[#self.selected_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.available_sup_items, obj_n)}
 			self:removeSupItem(self.available_sup_items, obj_n)
-			self.text_item[2]:SetText(gt("st_batch_7" .. name))
+			self.text_item[2]:SetText(gt("st_batch_7") .. " ".. name)
 		end
-		
+
 
 		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
 		self.CC[3]:Reinit(self:prepareForUi(self.selected_sup_items))
@@ -365,8 +367,8 @@ function UIRepair:OnItemSelect(n)
 	if n == 3 then
 		self.available_sup_items[#self.available_sup_items + 1] = { item = obj_n, item_bonus = self:getInfoForObject(self.selected_sup_items, obj_n)}
 		self:removeSupItem(self.selected_sup_items, obj_n)
-		
-		self.text_item[2]:SetText(gt("st_batch_8" .. name))
+
+		self.text_item[2]:SetText(gt("st_batch_8") .. " ".. name)
 
 		self.CC[2]:Reinit(self:prepareForUi(self.available_sup_items))
 		self.CC[3]:Reinit(self:prepareForUi(self.selected_sup_items))
@@ -381,9 +383,9 @@ function UIRepair:OnItemSelect(n)
 		if IsItem("part",nil,obj_1) then
 			self.con_val[4] = utils_item.get_cond_static(self.con_val[4])
 		end
-		
+
 		self.con_txt:SetText(utils_xml.get_color_con(self.con_val[1]) .. game.translate_string("st_ui_oldcon") .. ": +" .. self.con_val[1] .. "%")
-		
+
 		-- Reset supportive item when you choose main item
 		if (n == 1) and self.use_parts then
 			-- Icon
@@ -401,13 +403,13 @@ function UIRepair:OnItemSelect(n)
 
 	local repairInfo = self:calculateRepairInfo(obj_1)
 
-	self.repairs_needed:SetText(gt("st_batch_2") .. repairInfo[1])
-	self.total_sup_item_bonus:SetText(gt("st_batch_3") .. repairInfo[2] .. "%")
-	self.sup_bonus_breakdown:SetText(gt("st_batch_4") .. repairInfo[3])
-	self.repair_items_consumed:SetText(gt("st_batch_5") .. repairInfo[4])
-	self.con_txt_new:SetText(utils_xml.get_color_con(repairInfo[5]) .. game.translate_string("st_ui_total") .. ": +" .. repairInfo[5] .. "%")
-	self.repairs_breakdown:SetText(gt("st_batch_6") .. repairInfo[6])
-	
+	self.repairs_needed:SetText(gt("st_batch_2") .. " " .. repairInfo[1])
+	self.total_sup_item_bonus:SetText(gt("st_batch_3") .. " " .. repairInfo[2] .. "%")
+	self.sup_bonus_breakdown:SetText(gt("st_batch_4") .. " " .. repairInfo[3])
+	self.repair_items_consumed:SetText(gt("st_batch_5") .. " " .. repairInfo[4])
+	self.con_txt_new:SetText(utils_xml.get_color_con(repairInfo[5]) .. " " .. game.translate_string("st_ui_total") .. ": +" .. repairInfo[5] .. "%")
+	self.repairs_breakdown:SetText(gt("st_batch_6") .. " " .. repairInfo[6])
+
 	local clr_b = utils_xml.get_color("pda_blue",true)
 	local fnt = GetFontSmall()
 	for _,ci in pairs(self.CC[2].cell) do
@@ -416,14 +418,14 @@ function UIRepair:OnItemSelect(n)
 			ci:Add_CustomText( ("+"..con100), nil, nil, clr_b, fnt)
 		end
 	end
-	
+
 	for _,ci in pairs(self.CC[3].cell) do
 		if ci:IsShown() then
 			local con100 = ci.flags.info
 			ci:Add_CustomText( ("+"..con100), nil, nil, clr_b, fnt)
 		end
 	end
-	
+
 	self.btn_repair:Enable(true)
 end
 
@@ -440,19 +442,19 @@ function UIRepair:OnRepair()
 
 	-- Remove 1 use of the repair kit
 	if IsItem("multiuse",nil,self.obj) then
-		utils_item.discharge(self.obj) 
+		utils_item.discharge(self.obj)
 	else
 		utils_item.degrade(self.obj, degrade_factor)
 	end
-	
+
 	-- Effect
 	if (self.use_actor_effects and actor_effects) then
 		actor_effects.play_item_fx(self.section.."_dummy")
 	end
-	
+
 	-- Increase Statistic
 	game_statistics.increment_statistic("self_repairs")
-	
+
 	-- Hide dialog
 	self:OnCancel()
 end
@@ -460,9 +462,10 @@ end
 function UIRepair:OnBatchRepair()
 	local damagedItem = self.CC[1]:GetCell_Selected(true)
 	local kitIteration = 1
+	local lastUsedKit = nil
 
 	for _, kit in ipairs(self.kits) do
-		
+
 		while not kit.depleted and damagedItem:condition() < 0.98 do
 			local supItemInQueue = self.selected_sup_items[kitIteration]
 			local supItemBonus = (supItemInQueue and supItemInQueue.item_bonus or 0)
@@ -473,15 +476,17 @@ function UIRepair:OnBatchRepair()
 			end
 
 			local condToSet = clamp(repairAmount + damagedItem:condition() * 100, 0, 100) / 100
-			
+
 			damagedItem:set_condition(condToSet)
-	
+
 			if IsItem("multiuse",nil,kit.actual) then
 				utils_item.discharge(kit.actual)
 				kit.uses = kit.uses -1
 
+
 				if kit.uses <= 0 then
 					kit.depleted = true
+					self.depleted_kit_ids[kit.actual:id()] = true
 				end
 
 			else --Will need to rethink this kit thing. Or I shouldn't allow batch parts repair
@@ -497,11 +502,31 @@ function UIRepair:OnBatchRepair()
 			end
 
 			kitIteration = kitIteration + 1
+			lastUsedKit = kit
+		end
+
+		if not lastUsedKit or lastUsedKit.depleted then
+			lastUsedKit = kit
 		end
 	end
 
-	-- Hide dialog
-	self:OnCancel()
+	if lastUsedKit and not lastUsedKit.depleted then
+		self:Reset(lastUsedKit.actual, lastUsedKit.actual:section())
+	else
+		local subItem = nil
+		db.actor:iterate_inventory( function(owner, obj)
+			if (IsItem("repair",obj:section())) then
+				subItem = obj
+				return true
+			end
+		end)
+
+		if not subItem then
+			 self:OnCancel()
+		else
+			self:Reset(subItem, subItem:section())
+		end
+	end
 end
 
 function UIRepair:OnKeyboard(dik, keyboard_action)
@@ -512,7 +537,7 @@ function UIRepair:OnKeyboard(dik, keyboard_action)
 				self.CC[i]:OnKeyboard(dik, keyboard_action)
 			end
 		end
-		
+
 		local bind = dik_to_bind(dik)
 		if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 			if dik == DIK_keys.DIK_ESCAPE then
@@ -527,8 +552,9 @@ function UIRepair:OnCancel()
 	utils_obj.play_sound("interface\\inv_close")
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
+	self.depleted_kit_ids = {}
 	self:HideDialog()
-	
+
 	Unregister_UI("UIRepair")
 end
 
@@ -570,6 +596,7 @@ function UIRepair:calculateRepairInfo(selectedItem)
 	local repairItemsConsumed = 0
 	local itemCondition = selectedItem:condition()
 	local repairs_breakdown = "-"
+	local damagedItem = self.CC[1]:GetCell_Selected(true)
 
 	for i, kit in ipairs(self.kits) do
 		local kitFakeUses = kit.uses
@@ -578,11 +605,11 @@ function UIRepair:calculateRepairInfo(selectedItem)
 
 		while not kitDepleted and itemCondition < 0.98 do
 			repairsNeeded = repairsNeeded + 1
-			
+
 			local supItemInQueue = self.selected_sup_items[repairsNeeded]
 			local supItemBonus = (supItemInQueue and supItemInQueue.item_bonus or 0)
 			local repairAmount = supItemBonus + math.floor((self.add_condition)*100)
-			
+
 			totalSupItemBonus = totalSupItemBonus + supItemBonus
 
 			if supItemInQueue then
@@ -598,7 +625,7 @@ function UIRepair:calculateRepairInfo(selectedItem)
 			end
 
 			local condToSet = clamp(repairAmount + itemCondition * 100, 0, 100) / 100
-			
+
 			local currentCondPart = " -> +" .. tostring(math.ceil(condToSet * 100)) .. "%" -- Example: "-> +24%"
 			if #repairs_breakdown <= 1 then
 				local initialCondStat = "+" .. tostring(math.ceil(itemCondition * 100)) .. "%" -- Example: "+50%"
@@ -606,9 +633,8 @@ function UIRepair:calculateRepairInfo(selectedItem)
 			else
 				repairs_breakdown = repairs_breakdown .. utils_xml.get_color_con(condToSet * 100) .. currentCondPart
 			end
-			
+
 			itemCondition = condToSet
-	
 
 			if IsItem("multiuse",nil,kit.actual) then
 				kitFakeUses = kitFakeUses - 1
