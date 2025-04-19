@@ -4,7 +4,7 @@
 			<texture>ui_batch_maintenance</texture>
 		</background>
 	
-		<cap_tab x="149" y="52" width="245" height="30">
+		<cap_tab x="160" y="52" width="245" height="30">
 			<text complex_mode="1" r="200" g="200" b="200" align="c" vert_align="c" font="letterica18"/>
 		</cap_tab>
 		
