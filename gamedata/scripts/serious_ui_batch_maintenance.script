@@ -40,7 +40,6 @@ function UIRepair:__init(obj,section) super()
 
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
-	self.depleted_kit_ids = {}
 
 	--Kit and uses
 	self.kits =
@@ -71,14 +70,16 @@ function UIRepair:InitControls()
 
 	self.dialog					= xml:InitStatic("repair", self)
 	xml:InitStatic("repair:background", self.dialog)
-	self.cap_menu 					= xml:InitTextWnd("repair:cap_tab" , self.dialog)
-	self.cap           = {}
-	self.b_item        = {}
-	self.list          = {} -- List of items
-	self.cell_item      = {} -- Item's Icon
-	self.text_item     = {} -- Item's Name
-	self.con_txt       = {}
-	self.CC            = {}
+	self.cap_menu 			= xml:InitTextWnd("repair:cap_tab" , self.dialog)
+	self.cap           		= {}
+	self.b_item        		= {}
+	self.list          		= {} -- List of items
+	self.cell_item      	= {} -- Item's Icon
+	self.text_item     		= {} -- Item's Name
+	self.con_txt       		= {}
+	self.CC            		= {}
+	self.repair_item_icon	= nil
+	self.repair_items		= {}
 
 	self.cell_item[1]         = utils_ui.UICellItem( {path="container" , xml=xml} , { path="repair:box_item_1", base= self.dialog } )
 	self.cell_item[1].disable_bar = true
@@ -86,6 +87,10 @@ function UIRepair:InitControls()
 	for i=1,4 do
 		self.b_item[i]            = xml:InitStatic("repair:back_item_" .. tostring(i) , self.dialog)
 	end
+
+	self.b_item[5] = xml:InitStatic("repair:repair_item_area:back_item_5", self.dialog)
+	self.repair_item_icon = xml:InitStatic("repair:repair_item_area:repair_item_icon" , self.dialog)
+	self.repair_item_icon_temp = xml:InitStatic("repair:repair_item_area:repair_item_icon" , self.dialog)
 
 	for i=1,3 do
 		self.cap[i]               = xml:InitStatic("repair:cap_repair_" .. tostring(i),self.dialog)
@@ -131,6 +136,15 @@ function UIRepair:InitControls()
 	self.btn_cancel = xml:Init3tButton("repair:btn_back", self.dialog)
 	self:Register(self.btn_cancel,"btn_cancel")
 
+	-- Repair item area controls
+	self.btn_prev_ritem = xml:Init3tButton("repair:repair_item_area:btn_prev_ritem", self.dialog)
+	self.btn_prev_ritem:Enable(true)
+	self:Register(self.btn_prev_ritem,"btn_prev_ritem")
+	
+	self.btn_next_ritem = xml:Init3tButton("repair:repair_item_area:btn_next_ritem", self.dialog)
+	self.btn_next_ritem:Enable(true)
+	self:Register(self.btn_next_ritem,"btn_next_ritem")
+	
 	-- DEBUG
 	-- self.debug_element = xml:Init3tButton("repair:debug_element", self.dialog)
 	-- DEBUG
@@ -139,6 +153,8 @@ end
 function UIRepair:InitCallBacks()
 	self:AddCallback("btn_repair", ui_events.BUTTON_CLICKED, self.OnBatchRepair, self)
 	self:AddCallback("btn_cancel", ui_events.BUTTON_CLICKED, self.OnCancel, self)
+	self:AddCallback("btn_prev_ritem", ui_events.BUTTON_CLICKED, self.PrevRepairItem, self)
+	self:AddCallback("btn_next_ritem", ui_events.BUTTON_CLICKED, self.NextRepairItem, self)
 end
 
 function UIRepair:Reset(obj,section)
@@ -179,12 +195,15 @@ function UIRepair:Reset(obj,section)
 	-- self.con_txt_base:SetText("")
 	self.con_txt_new:SetText("")
 	self.btn_repair:Enable(false)
+	self.btn_prev_ritem:Enable(true)
+	self.btn_next_ritem:Enable(true)
 
 	local to_show = self.use_parts and true or false
 	self.cap[2]:Show(to_show)
 	self.b_item[2]:Show(to_show)
 	self.b_item[3]:Show(to_show)
 	self.b_item[4]:Show(to_show)
+	self.b_item[5]:Show(to_show)
 	self.text_item[2]:Show(to_show)
 	-- self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
@@ -206,6 +225,8 @@ function UIRepair:Reset(obj,section)
 	self.repair_items_consumed:Show(true)
 	self.repairs_breakdown:Show(true)
 
+	utils_xml.set_upgr_icon(self.obj, self.section, self.repair_item_icon, self.repair_item_icon_temp)
+	
 	-- Show damaged items
 	self:InitInventory(1)
 
@@ -222,23 +243,18 @@ end
 
 function UIRepair:InitInventory(n)
 	local inv = {}
-	-- self.available_suppitems = {}
-	-- self.info_available_suppitems = {}
-	-- self.selected_suppitems = {}
-	-- self.info_selected_suppitems = {}
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
 	local size_t = 0
 
 	-- Compatible weapons list to repair
 	if n == 1 then
+	self.repair_items = {}
 	self.kits = {}
 		db.actor:iterate_inventory( function(owner, obj)
 			if (obj:section() == self.obj:section()) then
 				printf("InitInventory object sect: %s, self.object: ", obj:section(), self.obj:section())
-				if not self.depleted_kit_ids[obj:id()] then
-					self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
-				end
+				self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
 			end
 
 			local sec = obj:section()
@@ -250,7 +266,35 @@ function UIRepair:InitInventory(n)
 					inv[size_t] = obj
 				end
 			end
+
+			if (IsItem("repair",sec)) then
+				--Check if not already in list by sec.
+				local alreadyInList = false
+				for _, value in ipairs(self.repair_items) do
+					if value.kit and value.kit:section() == sec then
+						alreadyInList = true
+					end
+				end
+
+				if not alreadyInList then
+					local isRepairItemSelected = self.section == sec or false
+					self.repair_items[#self.repair_items+1] =
+					{
+						kit = obj,
+						selected = isRepairItemSelected
+					}
+
+					if isRepairItemSelected then
+						self.repair_item_selected_index = #self.repair_items -- It's always going to be current size
+					end
+				end
+			end
 		end)
+
+		if #self.repair_items == 1 then
+			self.btn_prev_ritem:Enable(false)
+			self.btn_next_ritem:Enable(false)
+		end
 
 		self.CC[1]:Reinit(inv)
 
@@ -464,8 +508,7 @@ function UIRepair:OnBatchRepair()
 	local kitIteration = 1
 	local lastUsedKit = nil
 
-	for _, kit in ipairs(self.kits) do
-
+	for i, kit in ipairs(self.kits) do
 		while not kit.depleted and damagedItem:condition() < 0.98 do
 			local supItemInQueue = self.selected_sup_items[kitIteration]
 			local supItemBonus = (supItemInQueue and supItemInQueue.item_bonus or 0)
@@ -483,14 +526,11 @@ function UIRepair:OnBatchRepair()
 				utils_item.discharge(kit.actual)
 				kit.uses = kit.uses -1
 
-
 				if kit.uses <= 0 then
 					kit.depleted = true
-					self.depleted_kit_ids[kit.actual:id()] = true
 				end
-
 			else --Will need to rethink this kit thing. Or I shouldn't allow batch parts repair
-				utils_item.degrade(kit, degrade_factor)
+				utils_item.degrade(kit.actual, degrade_factor)
 			end
 
 			if supItemBonus > 0 then
@@ -502,31 +542,34 @@ function UIRepair:OnBatchRepair()
 			end
 
 			kitIteration = kitIteration + 1
-			lastUsedKit = kit
 		end
 
-		if not lastUsedKit or lastUsedKit.depleted then
+		if not lastUsedKit and not kit.depleted then
 			lastUsedKit = kit
 		end
 	end
 
-	if lastUsedKit and not lastUsedKit.depleted then
-		self:Reset(lastUsedKit.actual, lastUsedKit.actual:section())
-	else
-		local subItem = nil
-		db.actor:iterate_inventory( function(owner, obj)
-			if (IsItem("repair",obj:section())) then
-				subItem = obj
-				return true
-			end
-		end)
-
-		if not subItem then
-			 self:OnCancel()
+	CreateTimeEvent("sam", "check_reinit_repair_window", 0.1, function()
+		if lastUsedKit and not lastUsedKit.depleted then
+			self:Reset(lastUsedKit.actual, lastUsedKit.actual:section())
 		else
-			self:Reset(subItem, subItem:section())
+			local subItem = nil
+			db.actor:iterate_inventory( function(owner, obj)
+				if (IsItem("repair",obj:section())) then
+					subItem = obj
+					return true
+				end
+			end)
+	
+			if not subItem then
+				 self:OnCancel()
+			else
+				self:Reset(subItem, subItem:section())
+			end
 		end
-	end
+
+		return true
+	end)
 end
 
 function UIRepair:OnKeyboard(dik, keyboard_action)
@@ -552,7 +595,8 @@ function UIRepair:OnCancel()
 	utils_obj.play_sound("interface\\inv_close")
 	self.available_sup_items = {}
 	self.selected_sup_items = {}
-	self.depleted_kit_ids = {}
+	self.repair_items = {}
+	self.repair_item_selected_index = nil
 	self:HideDialog()
 
 	Unregister_UI("UIRepair")
@@ -682,4 +726,28 @@ function UIRepair:calculateRepairInfo(selectedItem)
 		math.ceil(itemCondition * 100),
 		repairs_breakdown,
 	}
+end
+
+function UIRepair:PrevRepairItem()
+	local repairItem = nil
+	if self.repair_item_selected_index == 1 then
+		repairItem = self.repair_items[#self.repair_items].kit
+	else
+		repairItem = self.repair_items[self.repair_item_selected_index - 1].kit
+	end
+	
+	self.repair_items = {}
+	self:Reset(repairItem, repairItem:section())
+end
+
+function UIRepair:NextRepairItem()
+	local repairItem = nil
+	if self.repair_item_selected_index == #self.repair_items then
+		repairItem = self.repair_items[1].kit
+	else
+		repairItem = self.repair_items[self.repair_item_selected_index + 1].kit
+	end
+	
+	self.repair_items = {}
+	self:Reset(repairItem, repairItem:section())
 end
