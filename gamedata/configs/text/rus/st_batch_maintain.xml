@@ -4,6 +4,9 @@
 		<text>Подробности о ремонте</text>
 	</string>
 	<string id="st_batch_repair">
+		<text>полный ремонт</text>
+	</string>
+	<string id="st_btn_batch_repair">
 		<text>Полный ремонт</text>
 	</string>
 	<string id="st_batch_1">

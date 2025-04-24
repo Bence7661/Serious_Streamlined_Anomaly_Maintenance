@@ -4,6 +4,9 @@
 		<text>Repair details</text>
 	</string>
 	<string id="st_batch_repair">
+		<text>batch repair</text>
+	</string>
+	<string id="st_btn_batch_repair">
 		<text>Batch repair</text>
 	</string>
 	<string id="st_batch_1">
