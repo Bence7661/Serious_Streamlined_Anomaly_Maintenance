@@ -179,10 +179,8 @@ function UIRepair:Reset(obj,section)
 
 	-- Elements
 	self.available_sup_items = {}
-	self.selected_sup_items = {}
 	self.CC[2]:Reset()
 --SELECTED SUPP ITEMS
-	self.available_sup_items = {}
 	self.selected_sup_items = {}
 	self.CC[3]:Reset()
 --SELECTED SUPP ITEMS
@@ -208,6 +206,8 @@ function UIRepair:Reset(obj,section)
 	-- self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
 	self.CC[3]:Show(to_show)
+
+	--Repair items and kits are reset in InitInventory
 
 	-- Set Repair kit name
 	self.cap_menu:SetText(ui_item.get_sec_name(self.section))
@@ -254,7 +254,15 @@ function UIRepair:InitInventory(n)
 		db.actor:iterate_inventory( function(owner, obj)
 			if (obj:section() == self.obj:section()) then
 				printf("InitInventory object sect: %s, self.object: ", obj:section(), self.obj:section())
-				self.kits[#self.kits+1] = { actual = obj, uses = obj:get_remaining_uses(), depleted = false}
+
+				local isDegradable = utils_item.is_degradable(obj, obj:section())
+				self.kits[#self.kits+1] =
+				{
+					actual = obj,
+					uses = obj:get_remaining_uses(),
+					depleted = false,
+					condition = isDegradable and obj:condition() or -1
+				}
 			end
 
 			local sec = obj:section()
@@ -529,8 +537,11 @@ function UIRepair:OnBatchRepair()
 				if kit.uses <= 0 then
 					kit.depleted = true
 				end
-			else --Will need to rethink this kit thing. Or I shouldn't allow batch parts repair
-				utils_item.degrade(kit.actual, degrade_factor)
+			else
+				local remainingCond = utils_item.degrade(kit.actual, degrade_factor)
+				if remainingCond <= 0 then
+					kit.depleted = true
+				end
 			end
 
 			if supItemBonus > 0 then
@@ -555,14 +566,14 @@ function UIRepair:OnBatchRepair()
 		else
 			local subItem = nil
 			db.actor:iterate_inventory( function(owner, obj)
-				if (IsItem("repair",obj:section())) then
+				if (IsItem("repair", obj:section())) then
 					subItem = obj
 					return true
 				end
 			end)
 	
 			if not subItem then
-				 self:OnCancel()
+				self:OnCancel()
 			else
 				self:Reset(subItem, subItem:section())
 			end
@@ -645,7 +656,7 @@ function UIRepair:calculateRepairInfo(selectedItem)
 	for i, kit in ipairs(self.kits) do
 		local kitFakeUses = kit.uses
 		local kitDepleted = false
-
+		local kitFakeCond = kit.condition
 
 		while not kitDepleted and itemCondition < 0.98 do
 			repairsNeeded = repairsNeeded + 1
@@ -684,6 +695,13 @@ function UIRepair:calculateRepairInfo(selectedItem)
 				kitFakeUses = kitFakeUses - 1
 
 				if kitFakeUses <= 0 then
+					kitDepleted = true
+					repairItemsConsumed = repairItemsConsumed + 1
+				end
+			else
+				kitFakeCond = FakeDegrade(kitFakeCond, degrade_factor)
+
+				if kitFakeCond <= 0 then
 					kitDepleted = true
 					repairItemsConsumed = repairItemsConsumed + 1
 				end
@@ -750,4 +768,18 @@ function UIRepair:NextRepairItem()
 	
 	self.repair_items = {}
 	self:Reset(repairItem, repairItem:section())
+end
+
+function FakeDegrade(cond, num)
+	if not (num and num > 0) then
+		return
+	end
+
+	if (cond > num) then
+		local new_con = cond - num
+		new_con = clamp(new_con,0.01,0.99)
+		return new_con
+	end
+
+	return 0
 end
