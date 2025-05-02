@@ -225,7 +225,7 @@ function UIRepair:Reset(obj,section)
 	self.repair_items_consumed:Show(true)
 	self.repairs_breakdown:Show(true)
 
-	utils_xml.set_upgr_icon(self.obj, self.section, self.repair_item_icon, self.repair_item_icon_temp)
+	utils_xml.set_icon(self.section, false, self.repair_item_icon, self.repair_item_icon_temp)
 	
 	-- Show damaged items
 	self:InitInventory(1)
