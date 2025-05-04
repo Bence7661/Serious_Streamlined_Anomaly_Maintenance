@@ -210,12 +210,12 @@ function UIRepair:Reset(obj,section)
 	-- Set Repair kit name
 	self.cap_menu:SetText(ui_item.get_sec_name(self.section))
 
-	self.repair_kit_base:SetText(gt("st_batch_1") .. utils_xml.get_color("pda_white") .. "+" .. tostring(self.add_condition * 100) .. "%")
-	self.repairs_needed:SetText(gt("st_batch_2"))
-	self.total_sup_item_bonus:SetText(gt("st_batch_3"))
-	self.sup_bonus_breakdown:SetText(gt("st_batch_4"))
-	self.repair_items_consumed:SetText(gt("st_batch_5"))
-	self.repairs_breakdown:SetText(gt("st_batch_6"))
+	self.repair_kit_base:SetText(gt("st_batch_1") .. utils_xml.get_color("pda_white") .. " +" .. tostring(self.add_condition * 100) .. "%")
+	self.repairs_needed:SetText(gt("st_batch_2") .. " -")
+	self.total_sup_item_bonus:SetText(gt("st_batch_3") .. " -")
+	self.sup_bonus_breakdown:SetText(gt("st_batch_4") .. " -")
+	self.repair_items_consumed:SetText(gt("st_batch_5") .. " -")
+	self.repairs_breakdown:SetText(gt("st_batch_6") .. " -")
 	self.repair_kit_base:Show(true)
 	self.repairs_needed:Show(true)
 	self.total_sup_item_bonus:Show(true)
@@ -769,12 +769,12 @@ function UIRepair:calculateRepairInfo(selectedItem)
 
 	return
 	{
-		repairsNeededTxt,
-		totalSupItemBonusTxt,
-		supBonusBreakdown,
-		repairItemsConsumedTxt,
-		math.ceil(itemCondition * 100),
-		repairs_breakdown,
+		repairsNeededTxt or " -",
+		totalSupItemBonusTxt or " -",
+		supBonusBreakdown or " -",
+		repairItemsConsumedTxt or " -",
+		math.ceil(itemCondition * 100) or " -",
+		repairs_breakdown or " -",
 	}
 end
 
