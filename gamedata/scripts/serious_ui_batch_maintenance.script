@@ -196,16 +196,6 @@ function UIRepair:Reset(obj,section)
 	self.btn_prev_ritem:Enable(true)
 	self.btn_next_ritem:Enable(true)
 
-	local isDegradable = utils_item.is_degradable(obj, obj:section())
-	if isDegradable then
-		local cond = math.floor(obj:condition() * 100 + 0.5)
-		local repairInfoTxt = gt("st_condition") .. ": " .. utils_xml.get_color_con(cond) .. cond .. "%"
-		self.repair_item_info:SetText(repairInfoTxt)
-	else
-		local repairInfoTxt = gt("st_ui_number_of_uses") .. ": " .. UsesTxtColored(obj:get_remaining_uses())
-		self.repair_item_info:SetText(repairInfoTxt)
-	end
-
 	local to_show = self.use_parts and true or false
 	self.cap[2]:Show(to_show)
 	self.b_item[2]:Show(to_show)
@@ -255,15 +245,18 @@ function UIRepair:InitInventory(n)
 	if n == 1 then
 		self.repair_items = {}
 		self.kits = {}
+		local compoundUses = 0
 		db.actor:iterate_inventory( function(owner, obj)
 			if (obj:section() == self.obj:section()) then
 				printf("InitInventory object sect: %s, self.object: ", obj:section(), self.obj:section())
 
+				local uses = obj:get_remaining_uses()
+				compoundUses = compoundUses + uses
 				local isDegradable = utils_item.is_degradable(obj, obj:section())
 				self.kits[#self.kits+1] =
 				{
 					actual = obj,
-					uses = obj:get_remaining_uses(),
+					uses = uses,
 					depleted = false,
 					condition = isDegradable and obj:condition() or -1
 				}
@@ -323,6 +316,30 @@ function UIRepair:InitInventory(n)
 
 			if self.skip_count == 0 then self:PlaySound("briefcase") end
 			return
+		end
+
+		local isDegradable = utils_item.is_degradable(self.obj, self.obj:section())
+		if isDegradable then
+			local cond = math.floor(self.obj:condition() * 100 + 0.5)
+			local repairInfoTxt = gt("st_condition") .. ": " .. utils_xml.get_color_con(cond) .. cond .. "%"
+			self.repair_item_info:SetText(repairInfoTxt)
+		else
+			local itemsInInv = #self.kits
+			local dots = "•"
+			local truncationLimit = 7
+			local compactLimit = 4
+			local iterations = truncationLimit
+			local truncate = itemsInInv > truncationLimit
+			if not truncate then iterations = itemsInInv end
+
+			for _ = 2, iterations do
+				if iterations < compactLimit then dots = dots .. " " end
+				dots = dots .. "•"
+			end
+			if truncate then dots = dots .. "*" end
+
+			local repairInfoTxt = gt("st_ui_number_of_uses") .. ": " .. UsesTxtColored(compoundUses) .. " " .. dots
+			self.repair_item_info:SetText(repairInfoTxt)
 		end
 
 		self.CC[1]:Reinit(inv)
@@ -602,6 +619,8 @@ function UIRepair:OnBatchRepair()
 
 		return true
 	end)
+
+	utils_obj.play_sound("weapons\\binoc_draw") --Sounds like a repair sound. What are you going to do about it?
 end
 
 function UIRepair:OnKeyboard(dik, keyboard_action)
