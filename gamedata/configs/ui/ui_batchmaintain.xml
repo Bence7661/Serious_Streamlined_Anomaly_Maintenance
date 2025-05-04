@@ -74,11 +74,6 @@
 		</repairs_breakdown>
 	<!-- /Repair details -->
 
-		<debug_element x="229" y="481" width="280" height="18" stretch="1">
-			<text r="150" g="150" b="150" font="letterica16" >DEBUG ELEMENT</text>
-			<texture>ui_button_ordinary</texture>
-		</debug_element>
-
 		<!-- Item 1 -->
 		<cap_cook_1 x="364" y="70" width="304" height="39">
 			<text r="200" g="200" b="200" font="letterica18" align="c" vert_align="c">st_ui_itm_cook_fuel</text>
@@ -125,8 +120,16 @@
 		<!-- Repair kit/item and it's controls -->
 		<repair_item_area>
 			<!-- Background -->
-			<repair_item_icon x="600" y="587" width="50" height="50" stretch="1"/>
-			<back_item_5 x="575" y="574" width="100" height="70" stretch="1">
+			<debug_element x="600" y="500" width="120" height="25">
+				<text r="150" g="150" b="150" font="letterica16" >DEBUG ELEMENT</text>
+				<texture>ui_button_ordinary</texture>
+			</debug_element>
+
+			<repair_item_info x="576" y="559" width="120" height="25">
+				<text complex_mode="1" r="150" g="150" b="150" vert_align="c" font="letterica16"/>
+			</repair_item_info>
+			<repair_item_icon x="600" y="595" width="50" height="50" stretch="1"/>
+			<back_item_5 x="575" y="582" width="100" height="70" stretch="1">
 				<texture>ui_inGame2_workshop_big_item_menu</texture>
 			</back_item_5>
 

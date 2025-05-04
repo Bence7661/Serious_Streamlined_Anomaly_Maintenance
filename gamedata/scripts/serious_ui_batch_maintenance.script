@@ -88,6 +88,7 @@ function UIRepair:InitControls()
 		self.b_item[i]            = xml:InitStatic("repair:back_item_" .. tostring(i) , self.dialog)
 	end
 
+	self.repair_item_info = xml:InitTextWnd("repair:repair_item_area:repair_item_info", self.dialog)
 	self.b_item[5] = xml:InitStatic("repair:repair_item_area:back_item_5", self.dialog)
 	self.repair_item_icon = xml:InitStatic("repair:repair_item_area:repair_item_icon" , self.dialog)
 	self.repair_item_icon_temp = xml:InitStatic("repair:repair_item_area:repair_item_icon" , self.dialog)
@@ -146,7 +147,7 @@ function UIRepair:InitControls()
 	self:Register(self.btn_next_ritem,"btn_next_ritem")
 	
 	-- DEBUG
-	-- self.debug_element = xml:Init3tButton("repair:debug_element", self.dialog)
+	-- self.debug_element = xml:Init3tButton("repair:repair_item_area:debug_element", self.dialog)
 	-- DEBUG
 end
 
@@ -185,16 +186,23 @@ function UIRepair:Reset(obj,section)
 	self.CC[3]:Reset()
 --SELECTED SUPP ITEMS
 	self.con_txt:SetText("")
-	-- self.con_txt[2]:SetText("")
 	self.text_item[1]:SetText("")
 	self.text_item[2]:SetText("")
 	self.cell_item[1]:Reset()
-	-- self.cell_item[2]:Reset()
-	-- self.con_txt_base:SetText("")
 	self.con_txt_new:SetText("")
 	self.btn_repair:Enable(false)
 	self.btn_prev_ritem:Enable(true)
 	self.btn_next_ritem:Enable(true)
+
+	local isDegradable = utils_item.is_degradable(obj, obj:section())
+	if isDegradable then
+		local cond = math.floor(obj:condition() * 100 + 0.5)
+		local repairInfoTxt = gt("st_condition") .. ": " .. utils_xml.get_color_con(cond) .. cond .. "%"
+		self.repair_item_info:SetText(repairInfoTxt)
+	else
+		local repairInfoTxt = gt("st_ui_number_of_uses") .. ": " .. UsesTxtColored(obj:get_remaining_uses())
+		self.repair_item_info:SetText(repairInfoTxt)
+	end
 
 	local to_show = self.use_parts and true or false
 	self.cap[2]:Show(to_show)
@@ -203,10 +211,8 @@ function UIRepair:Reset(obj,section)
 	self.b_item[4]:Show(to_show)
 	self.b_item[5]:Show(to_show)
 	self.text_item[2]:Show(to_show)
-	-- self.con_txt[2]:Show(to_show)
 	self.CC[2]:Show(to_show)
 	self.CC[3]:Show(to_show)
-
 	--Repair items and kits are reset in InitInventory
 
 	-- Set Repair kit name
@@ -712,35 +718,25 @@ function UIRepair:calculateRepairInfo(selectedItem)
 	end
 
 	self.amount_of_repairs = repairsNeeded
-	if repairsNeeded == 1 then repairsNeeded = utils_xml.get_color("d_green") .. tostring(repairsNeeded)
-	elseif repairsNeeded == 2 then repairsNeeded = utils_xml.get_color("yellow") .. tostring(repairsNeeded)
-	elseif repairsNeeded == 3 then repairsNeeded = utils_xml.get_color("d_orange") .. tostring(repairsNeeded)
-	elseif repairsNeeded > 3 then repairsNeeded = utils_xml.get_color("d_red") .. tostring(repairsNeeded)
-	end
+	local repairsNeededTxt = UsesTxtColored(repairsNeeded, true)
 
-
+	local totalSupItemBonusTxt = ""
 	if self.selected_sup_items[1] then -- At least 1 support item used
-		totalSupItemBonus = utils_xml.get_color("d_green") .. "+" .. tostring(totalSupItemBonus)
+		totalSupItemBonusTxt = utils_xml.get_color("d_green") .. "+" .. tostring(totalSupItemBonus)
 	else
-		totalSupItemBonus = utils_xml.get_color("d_red") .. "+" .. tostring(totalSupItemBonus)
+		totalSupItemBonusTxt = utils_xml.get_color("d_red") .. "+" .. tostring(totalSupItemBonus)
 	end
 
 	if supBonusBreakdown ~= "-" then supBonusBreakdown = utils_xml.get_color("pda_blue") .. tostring(supBonusBreakdown) end
 
-	if repairItemsConsumed == 0 then repairItemsConsumed = utils_xml.get_color("d_green") .. tostring(repairItemsConsumed)
-	elseif repairItemsConsumed == 1 then repairItemsConsumed = utils_xml.get_color("yellow") .. tostring(repairItemsConsumed)
-	elseif repairItemsConsumed == 2 then repairItemsConsumed = utils_xml.get_color("d_orange") .. tostring(repairItemsConsumed)
-	elseif repairItemsConsumed > 2 then repairItemsConsumed = utils_xml.get_color("d_red") .. tostring(repairItemsConsumed)
-	end
-
-	-- repairs_breakdown = utils_xml.get_color("pda_blue") .. repairs_breakdown
+	local repairItemsConsumedTxt = UsesTxtColored(repairItemsConsumed, true) or 0
 
 	return
 	{
-		repairsNeeded,
-		totalSupItemBonus,
+		repairsNeededTxt,
+		totalSupItemBonusTxt,
 		supBonusBreakdown,
-		repairItemsConsumed,
+		repairItemsConsumedTxt,
 		math.ceil(itemCondition * 100),
 		repairs_breakdown,
 	}
@@ -765,7 +761,7 @@ function UIRepair:NextRepairItem()
 	else
 		repairItem = self.repair_items[self.repair_item_selected_index + 1].kit
 	end
-	
+
 	self.repair_items = {}
 	self:Reset(repairItem, repairItem:section())
 end
@@ -782,4 +778,24 @@ function FakeDegrade(cond, num)
 	end
 
 	return 0
+end
+
+function UsesTxtColored(uses, reverse)
+	local str = ""
+
+	if not reverse then
+		if uses == 1 then str = utils_xml.get_color("d_red") .. tostring(uses)
+		elseif uses == 2 then str = utils_xml.get_color("d_orange") .. tostring(uses)
+		elseif uses == 3 then str = utils_xml.get_color("yellow") .. tostring(uses)
+		elseif uses > 3 then str = utils_xml.get_color("d_green") .. tostring(uses)
+		end
+	else
+		if uses == 1 then str = utils_xml.get_color("d_green") .. tostring(uses)
+		elseif uses == 2 then str = utils_xml.get_color("yellow") .. tostring(uses)
+		elseif uses == 3 then str = utils_xml.get_color("d_orange") .. tostring(uses)
+		elseif uses > 3 then str = utils_xml.get_color("d_red") .. tostring(uses)
+		end
+	end
+
+	return str
 end
