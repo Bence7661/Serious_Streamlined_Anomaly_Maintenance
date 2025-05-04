@@ -51,6 +51,7 @@ function UIRepair:__init(obj,section) super()
 
 	self.amount_of_repairs = 0
 	self.closed = true --Will be toggled to false when listboxes are filled up etc...
+	self.skip_count = 0
 
 	-- Reload settings
 	self.clr_b = utils_xml.get_color("pda_blue")
@@ -240,16 +241,7 @@ function UIRepair:Reset(obj,section)
 	-- Hide active item
 	actor_effects.toggle_active_slot(0)
 
-	-- Play sound
-	if self.mute ~= false then
-		if (self.repair_frame == "ui_itm_repair_1") or (self.repair_frame == "ui_itm_repair_2") then
-			utils_obj.play_sound("interface\\inv_zipper_open")
-		else
-			utils_obj.play_sound("interface\\inv_briefcase_light_open")
-		end
-	end
-
-	self.mute = false
+	if self.closed then self:PlaySound() end
 	self.closed = false
 end
 
@@ -317,15 +309,22 @@ function UIRepair:InitInventory(n)
 		end
 
 		if #inv <= 0 and self.btn_next_ritem:IsEnabled() and self.closed ~= true then
-			self.mute = true
 
+			--At first this skip count might seem silly, but next & prev item calls can hit snippet too 
+			--multiple times before we reach the playsound line. 
+			--This system allows the sound to be played exactly once no matter how many skips we do.
+			self.skip_count = self.skip_count + 1
 			if self.direction and self.direction < 0 then
-				self:PrevRepairItem()
+				self:PrevRepairItem(true)
 			else
-				self:NextRepairItem()
+				self:NextRepairItem(true)
 			end
+			self.skip_count = self.skip_count - 1
+
+			if self.skip_count == 0 then self:PlaySound("briefcase") end
 			return
 		end
+
 		self.CC[1]:Reinit(inv)
 
 	-- Compatible part list to use
@@ -631,6 +630,7 @@ function UIRepair:OnCancel()
 	self.repair_items = {}
 	self.repair_item_selected_index = nil
 	self.closed = true
+	self.skip_count = 0
 	self:HideDialog()
 
 	Unregister_UI("UIRepair")
@@ -759,7 +759,7 @@ function UIRepair:calculateRepairInfo(selectedItem)
 	}
 end
 
-function UIRepair:PrevRepairItem()
+function UIRepair:PrevRepairItem(isSkipping)
 	self.direction = -1
 
 	local repairItem = nil
@@ -770,10 +770,12 @@ function UIRepair:PrevRepairItem()
 	end
 
 	self.repair_items = {}
+
+	if isSkipping ~= true then self:PlaySound() end
 	self:Reset(repairItem, repairItem:section())
 end
 
-function UIRepair:NextRepairItem()
+function UIRepair:NextRepairItem(isSkipping)
 	self.direction = 1
 
 	local repairItem = nil
@@ -784,7 +786,17 @@ function UIRepair:NextRepairItem()
 	end
 
 	self.repair_items = {}
+
+	if isSkipping ~= true then self:PlaySound() end
 	self:Reset(repairItem, repairItem:section())
+end
+
+function UIRepair:PlaySound(sound)
+	if sound and sound == "briefcase" then
+		utils_obj.play_sound("interface\\inv_briefcase_light_open")
+	else
+		utils_obj.play_sound("interface\\inv_zipper_open")
+	end
 end
 
 function FakeDegrade(cond, num)
